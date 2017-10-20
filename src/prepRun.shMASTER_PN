@@ -1,0 +1,30 @@
+#!/bin/bash
+
+
+
+for ((i=0; i<32; i++));
+do
+mkdir mercury${i}
+### copy basic mercury files into each directory (ensure param.in updated for proper run 1st)
+cp ../mercuryBasics/* mercury${i}
+
+###copy in infiles (small.ins and big.in)
+cp batch_infiles/big.in mercury${i}
+cp batch_infiles/small.in${i} mercury${i}
+
+mv mercury${i}/small.in${i} mercury${i}/small.in
+###cp ../runFiles/* ./.
+###rm *.aei
+###rm *.out
+###rm *.tmp
+###rm *.dmp
+###make a new small.in
+###cp ../small.in ./.
+###rm ../small.in
+done
+
+cp ../submit4.shMASTER_PN ./mercury0/submit4.sh
+cd mercury0
+qsub submit4.sh
+
+wait
