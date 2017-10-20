@@ -1,0 +1,83 @@
+#!/bin/bash
+### specify the queue and that job is not re-runable,
+### as well as the resources and the name
+#PBS -q cuth
+#PBS -r n 
+#PBS -l nodes=1,walltime=48:00:00
+#PBS -N mercuryTESTRUN
+#PBS -o /home/nstone/LOG
+#PBS -e /home/nstone/LOG
+
+umask 022
+
+echo "# time-start "`date`
+
+### determine the number of allocated nodes and cores
+NNODES=`cat ${PBS_NODEFILE} | wc -l`
+NCORES=$[${NNODES}*32]
+
+### generate machinefile
+for line in `cat ${PBS_NODEFILE}` 
+do 
+    for ((p=1;p<=32;p++));
+    do 
+        echo "$line" >> /scratch/mfile-${PBS_JOBID}
+    done
+done
+
+echo "Files in /scratch/"
+ls -l /scratch/
+
+### cd to directory where the job was submitted:
+cd ${PBS_O_WORKDIR}
+
+echo "--------------------------------"
+echo "PBS job running on: `hostname`"
+echo "in directory:       `pwd`"
+echo "PBS jobid:          ${PBS_JOBID}"
+echo "nodes:              ${NNODES}"
+echo "cores:              ${NCORES}"
+echo "Nodefile:"
+cat ${PBS_NODEFILE}
+echo "--------------------------------"
+
+############################################################## 
+### enter your bash commands here
+
+function cmd {
+echo "mercury${@+1}"
+
+### immediately write a combined stdout / stderr file
+###cd ../mercury${@+1}
+pwd
+
+exec > ./mercury${@+1}/${PBS_JOBNAME}-${PBS_JOBID}.out 2>&1
+
+./mercury${@+1}/mercury6allPN
+
+}
+
+###for ((i=0; i<2; i++));
+###do
+###cmd ${i} &
+###done
+
+###wait
+cd mercury0
+
+for ((i=0; i<32; i++));
+do
+cd ../mercury${i}
+rm *.aei
+rm *.out
+rm *.tmp
+rm *.dmp
+exec > ./${PBS_JOBNAME}-${PBS_JOBID}.out 2>&1
+./mercury6allPN & 
+done
+
+wait
+
+##############################################################
+echo "done"
+echo "# time-finish "`date`
